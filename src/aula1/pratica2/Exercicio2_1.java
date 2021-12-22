@@ -1,4 +1,4 @@
-package aula2;
+package aula1.pratica2;
 /*
  Dado um vetor de 10 posicoes, preenchido pelos valores
  52, 10, 85, 1324, 01, 13, 62, 30, 12 e 127.

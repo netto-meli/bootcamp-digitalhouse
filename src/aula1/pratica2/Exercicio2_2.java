@@ -1,4 +1,4 @@
-package aula2;
+package aula1.pratica2;
 /*
 Em 2021 uma startup de tecnologia, denominada de “Empresa X” é avaliada em R$ 1,13 milhão
 e possui uma média de crescimento anual de 148%.
@@ -20,7 +20,7 @@ public class Exercicio2_2 {
 
 
         int anoAtual=2021;
-        while(emp1.getValor().compareTo(emp2.getValor()) == -1){
+        while(emp1.getValor().compareTo(emp2.getValor()) < 0){
             imprimeStatusAtual(anoAtual,emp1,emp2);
             anoAtual++;
             emp1.calculaAvaliacao();
@@ -37,9 +37,9 @@ public class Exercicio2_2 {
     }
 
     private static class Empresa{
-        private String nome;
+        private final String nome;
         private BigDecimal valor;
-        private BigDecimal crescimento;
+        private final BigDecimal crescimento;
         public Empresa(String nomeEmp, BigDecimal valorMercado, BigDecimal crescimentoAnual) {
             nome = nomeEmp;
             valor = valorMercado;
@@ -52,10 +52,6 @@ public class Exercicio2_2 {
 
         public BigDecimal getValor() {
             return valor;
-        }
-
-        public BigDecimal getCrescimento() {
-            return crescimento;
         }
 
         public void calculaAvaliacao() {

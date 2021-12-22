@@ -1,4 +1,4 @@
-package aula2;
+package aula1.pratica2;
 /*
 Para um protótipo de supermercado, crie um programa que leia 3 produtos e
 imprima no console: nome, preço, quantidade e o valor total da compra. Utilize um array como
@@ -15,7 +15,7 @@ public class Exercicio2_3 {
         List<Produto> listaCompras = new ArrayList<>();
         listaCompras.add(solcitaProduto(i++));
         listaCompras.add(solcitaProduto(i++));
-        listaCompras.add(solcitaProduto(i++));
+        listaCompras.add(solcitaProduto(i));
 
         System.out.println("Lista de compras");
         for (Produto p: listaCompras) {
@@ -38,9 +38,10 @@ public class Exercicio2_3 {
     }
 
     private static class Produto {
-        private String nome;
-        private double preco;
-        private int quantidade;
+        //final, pois nao altero depois de criar
+        private final String nome;
+        private final double preco;
+        private final int quantidade;
 
         public Produto (String nm, double pr, int qt){
             nome = nm;

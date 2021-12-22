@@ -83,7 +83,7 @@ import java.util.List;
 public class RadixSort {
 
     public static void main(String[] args){
-        int iArr[] = {16223,898,13,906,235,23,9,1532,6388,2511,8};
+        int[] iArr = {16223,898,13,906,235,23,9,1532,6388,2511,8};
         System.out.println("antes\n");
         for (int i : iArr){
             System.out.println(i + " ");
@@ -116,19 +116,20 @@ public class RadixSort {
 
     private static List<String> reordenaArray(List<List> container) {
         List<String> arr = new ArrayList<>();
-        for (List<String> listaL : container) {
+        for (List listaL : container) {
             if(listaL.size()>0){
-                for (String numero:listaL) {
-                    arr.add(numero);
-                }
+                arr.addAll(listaL);
+                /*
+                for (String numero:listaL) {arr.add(numero);}
+                */
             }
         }
         return arr;
     }
 
     private static List<List> criaContainer(int indice, List<String> arrayStr) {
-        List<String> arrayNumeros;
         List<List> container = zeraContainer();
+        List<String> arrayNumeros;
         for ( String numero : arrayStr) {
             int k = Character.getNumericValue(numero.charAt(indice));
             arrayNumeros = container.get(k);
@@ -140,10 +141,10 @@ public class RadixSort {
 
     private static List<String> criaListaComZeros(int[] iArr, int numeroDigitos) {
         List<String> arrayStr = new ArrayList<>();
-        for(int i = 0; i < iArr.length ; i++) {
- //           String g = String.valueOf(iArr[i]);
+        for (int j : iArr) {
+            //String g = String.valueOf(j);
             String filtroZero = "%0" + numeroDigitos + "d";
-            String comZeros = String.format(filtroZero, iArr[i]);
+            String comZeros = String.format(filtroZero, j);
             arrayStr.add(comZeros);
         }
         return arrayStr;
@@ -162,9 +163,9 @@ public class RadixSort {
 
     private static int descobrirMaiorNumero(int[] iArr) {
         int maior=0;
-        for(int i = 0;i < iArr.length ;i++){
-            if(maior < iArr[i]) {
-                maior = iArr[i];
+        for (int j : iArr) {
+            if (maior < j) {
+                maior = j;
             }
         }
         // int maior= Arrays.stream(iArr).filter(i -> i >= 0).max().orElse(0);
