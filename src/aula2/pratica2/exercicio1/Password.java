@@ -1,13 +1,15 @@
 package aula2.pratica2.exercicio1;
 
-public class Password {
-    private String regex;
+import java.util.regex.Pattern;
 
-    public String getRegex() {
+public class Password {
+    private Pattern regex;
+
+    public Pattern getRegex() {
         return regex;
     }
 
-    public void setRegex(String regex) {
+    public void setRegex(Pattern regex) {
         this.regex = regex;
     }
 }

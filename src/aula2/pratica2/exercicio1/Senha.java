@@ -38,13 +38,15 @@ Explicação:
 $                 # end-of-string
  */
 
-public class Senha {
-    private final String regex;
+import java.util.regex.Pattern;
 
-    public Senha(String regex) { this.regex=regex; }
+public class Senha {
+    private final Pattern regex;
+
+    public Senha(Pattern regex) { this.regex=regex; }
 
     public void setValue(String senha) throws SenhaException {
-        if ( ! senha.matches(regex) ){
+        if ( ! regex.matcher(senha).find() ){
             String mensagem = "A senha \"" +senha+ "\" não esta no padrão.";
             throw new SenhaException(mensagem);
         }
