@@ -37,6 +37,19 @@ public class SortUtil {
                 }
             }
         }
+    */
+    /*
+    dava pra azer assim sera?
+    ==
+        for (Aluno al: listaAlunos){
+            if(al.getNome().equals(aluno.getNome())){
+                listaAlunos.set(listaAlunos.indexOf(al), aluno);
+                return aluno;
+            }
+        }
+    */
+    /*
+
 
 //exemplo internet
         for (int i = v.length; i >= 1; i--) {
