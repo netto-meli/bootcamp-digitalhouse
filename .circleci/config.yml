@@ -1,0 +1,159 @@
+version: 2.1
+
+orbs:
+  maven: circleci/maven@1.2.0
+
+jobs:
+  clone:
+    circleci_ip_ranges: true
+    docker:
+      - image: cimg/openjdk:17.0
+    steps:
+      - checkout
+      - attach_workspace:
+          at: /tmp/workspace
+      - persist_to_workspace:
+          root: ~/
+          paths:
+            - project
+
+  run-tests:
+    machine:
+      image: ubuntu-2004:202111-02
+      docker_layer_caching: true
+    parallelism: 2
+
+    environment:
+      CONTROL_PLANE_ADDRESS: "172.18.0.1"
+
+    steps:
+      - attach_workspace:
+          at: /tmp/workspace
+      - run:
+          name: Copy repo
+          command: cp -fr /tmp/workspace/project ~/
+
+      - run:
+          name: Docker Login
+          command: |
+            docker login docker-core.artifacts.furycloud.io -u $DOCKER_USER -p $DOCKER_PASS
+
+      - maven/with_cache:
+          steps:
+            - run:
+                name: Rebuild sidecar-proxy
+                command: docker-compose build --pull sidecar-proxy
+
+            - run:
+                name: Configure parallel tests
+                command: .circleci/generate_parallel_test_configs.sh surefire_classnames_ignore_list
+
+            - run:
+                name: Run Tests
+                command: |
+                  docker-compose -f docker-compose.yml run \
+                              --volume=$HOME/.m2:/root/.m2 \
+                              controlplane \
+                              mvn --batch-mode -Dsurefire.excludesFile=surefire_classnames_ignore_list -Dorg.jooq.no-logo=true compile flyway:clean flyway:migrate test
+
+      - maven/process_test_results
+
+  build-and-push:
+    circleci_ip_ranges: true
+    docker:
+      - image: cimg/openjdk:17.0
+
+    steps:
+      - checkout
+      - setup_remote_docker
+
+      - run:
+          name: Docker Login
+          command: |
+            docker login docker-core.artifacts.furycloud.io -u $DOCKER_USER -p $DOCKER_PASS
+
+      - maven/with_cache:
+          steps:
+            - run:
+                name: Package Application
+                command: mvn -Dorg.jooq.no-logo=true -Dmaven.test.skip=true -Pproduction package
+
+      - run:
+          name: Build Docker Image
+          command: |
+            docker build -t docker-core.artifacts.furycloud.io/mercadolibre/mesh/fury-controlplane:$CIRCLE_TAG -f Dockerfile.runtime .
+
+      - run:
+          name: Push Docker Image
+          command: |
+            docker push docker-core.artifacts.furycloud.io/mercadolibre/mesh/fury-controlplane:$CIRCLE_TAG
+
+      - run:
+          name: Prepare env
+          command: |
+            if echo "$CIRCLE_TAG" | grep -Eq '^feature-.*'; then
+              echo "ENVIRONMENT=stage" >> deploy/.env
+            elif echo "$CIRCLE_TAG" | grep -Eq '^release-.*'; then
+              echo "ENVIRONMENT=production" >> deploy/.env
+            fi
+            echo "VERSION=$CIRCLE_TAG" >> deploy/.env
+            echo "DATADOG_API_KEY=$DATADOG_API_KEY" >> deploy/.env
+            echo "DOCKER_USER=$DOCKER_USER" >> deploy/.env
+            echo "DOCKER_PASS=$DOCKER_PASS" >> deploy/.env
+
+      - run:
+          name: Upload to S3
+          command: |
+            sudo apt-get update && sudo apt-get install --no-install-recommends --no-install-suggests awscli
+            tar zcvf deploy.tar.gz -C deploy .
+            if echo "$CIRCLE_TAG" | grep -Eq '^feature-.*'; then
+              aws s3 cp deploy.tar.gz s3://furycore-codeploy/fury-controlplane/features/fury-controlplane-$CIRCLE_TAG.tar.gz
+            elif echo "$CIRCLE_TAG" | grep -Eq '^release-.*'; then
+              aws s3 cp deploy.tar.gz s3://furycore-codeploy/fury-controlplane/releases/fury-controlplane-$CIRCLE_TAG.tar.gz
+            fi
+
+workflows:
+  version: 2
+
+  validate-commit:
+    jobs:
+      - clone
+      - run-tests:
+          requires:
+            - clone
+
+  production-environment:
+    jobs:
+      - clone:
+          filters:
+            tags:
+              only: /^release-.+/
+            branches:
+              ignore: /.*/
+
+      - run-tests:
+          requires:
+            - clone
+          filters:
+            tags:
+              only: /^release-.+/
+            branches:
+              ignore: /.*/
+
+      - build-and-push:
+          requires:
+            - run-tests
+          filters:
+            tags:
+              only: /^release-.+/
+            branches:
+              ignore: /.*/
+
+  stage-environment:
+    jobs:
+      - build-and-push:
+          filters:
+            tags:
+              only: /^feature-.+/
+            branches:
+              ignore: /.*/
